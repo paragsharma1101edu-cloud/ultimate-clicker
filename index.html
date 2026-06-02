@@ -374,6 +374,47 @@
             const p = JSON.parse(saved); score = p.score||0; baseClickPower = p.baseClickPower||1; clickPowerCost = p.clickPowerCost||15; tier1Cost = p.tier1Cost||50; tier2Cost = p.tier2Cost||250; tier3Cost = p.tier3Cost||1200; tier4Cost = p.tier4Cost||7500; techOverclockCost = p.techOverclockCost||500; techNuclearCost = p.techNuclearCost||5000; tier1Count = p.tier1Count||0; tier2Count = p.tier2Count||0; tier3Count = p.tier3Count||0; tier4Count = p.tier4Count||0; cpsMultiplier = p.cpsMultiplier||1; clickMultiplier = p.clickMultiplier||1; isOverclockBought = p.isOverclockBought||false; isNuclearBought = p.isNuclearBought||false; achievements = p.achievements||achievements;
         }
         updateDisplay();
-    </script>
+    <div id="admin-panel" style="display:none; background: #331111; padding: 20px; border: 2px solid #ff0000; margin: 20px auto; border-radius: 10px; width: 80%; text-align: center;">
+    <h3 style="color:#ff4444;">GOD MODE CONTROLS</h3>
+    <input type="text" id="target-player" placeholder="Player Name" style="padding: 10px; margin: 5px;">
+    <input type="number" id="new-score" placeholder="New Score" style="padding: 10px; margin: 5px;">
+    <button onclick="adminModifyScore()" style="padding: 10px;">Set Score</button>
+    <button onclick="adminToggleBan()" style="padding: 10px;">Ban/Unban</button>
+    <button onclick="adminTriggerFrenzy()" style="padding: 10px; background:#ffcc00; color:black;">START GLOBAL FRENZY</button>
+</div>
+
+<button onclick="loginAdmin()" style="display: block; margin: 20px auto;">Admin Login</button>
+
+<script>
+    // Admin Login Logic
+    function loginAdmin() {
+        firebase.auth().signInWithPopup(new firebase.auth.GoogleAuthProvider()).then((res) => {
+            if(res.user.email === "paragsharma1101edu@gmail.com") {
+                document.getElementById('admin-panel').style.display = "block";
+            }
+        });
+    }
+
+    // God Mode functions
+    async function adminModifyScore() {
+        const name = document.getElementById('target-player').value;
+        const score = parseInt(document.getElementById('new-score').value);
+        await firebase.firestore().collection("leaderboard").doc(name).update({ highScore: score });
+        alert("Score updated!");
+    }
+
+    async function adminToggleBan() {
+        const name = document.getElementById('target-player').value;
+        const doc = await firebase.firestore().collection("leaderboard").doc(name).get();
+        const isBanned = doc.data().isBanned || false;
+        await firebase.firestore().collection("leaderboard").doc(name).update({ isBanned: !isBanned });
+        alert("Ban status toggled!");
+    }
+
+    async function adminTriggerFrenzy() {
+        await firebase.firestore().collection("global_events").doc("frenzy").set({ active: true, timestamp: Date.now() });
+        alert("Frenzy Triggered!");
+    }
+</script> 
 </body>
 </html>
