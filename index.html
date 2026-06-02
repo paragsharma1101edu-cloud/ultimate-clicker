@@ -2,78 +2,378 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Ultimate Clicker Evolution - God Mode</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ultimate Clicker Evolution</title>
     <style>
-        body { font-family: sans-serif; background: #1a1a22; color: #fff; padding: 20px; }
-        .admin-panel { background: #331111; padding: 20px; border: 2px solid #ff0000; margin-top: 20px; border-radius: 10px; }
-        input { padding: 8px; margin: 5px; background: #000; color: #fff; border: 1px solid #555; }
-        button { padding: 8px 15px; cursor: pointer; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #1a1a22;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        #global-admin-banner {
+            display: none;
+            width: 100%;
+            background: linear-gradient(90deg, #ff0055, #9900aa);
+            color: white;
+            text-align: center;
+            padding: 12px 0;
+            font-weight: bold;
+            font-size: 1.2rem;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 9999;
+            box-shadow: 0 4px 15px rgba(255,0,85,0.4);
+            letter-spacing: 0.5px;
+        }
+
+        .game-container {
+            display: grid;
+            grid-template-columns: 1fr 1.2fr;
+            gap: 25px;
+            background-color: #23232e;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+            max-width: 950px;
+            width: 100%;
+            z-index: 10;
+            margin-top: 40px;
+        }
+
+        .click-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-right: 2px solid #333344;
+            padding-right: 20px;
+            position: relative;
+        }
+
+        h1 { font-size: 3.5rem; margin: 5px 0; color: #00ffcc; text-shadow: 0 0 10px rgba(0,255,204,0.3); }
+        .score-display { font-size: 1.3rem; margin-bottom: 20px; color: #bbb; }
+
+        #frenzy-banner {
+            display: none; background-color: #ffcc00; color: #111; padding: 5px 15px;
+            font-weight: bold; border-radius: 20px; margin-bottom: 15px; animation: pulse 0.5s infinite alternate;
+        }
+        @keyframes pulse { from { transform: scale(1); } to { transform: scale(1.05); } }
+
+        #main-click-btn {
+            width: 190px; height: 190px; background: radial-gradient(circle, #ff4d4d, #cc0000);
+            border: none; border-radius: 50%; color: white; font-size: 1.6rem; font-weight: bold;
+            cursor: pointer; box-shadow: 0 8px 0 #990000, 0 15px 20px rgba(0,0,0,0.4);
+            transition: all 0.1s ease; outline: none; user-select: none;
+        }
+        #main-click-btn:active { transform: translateY(6px); box-shadow: 0 2px 0 #990000, 0 5px 10px rgba(0,0,0,0.4); }
+
+        .shop-scroll { max-height: 500px; overflow-y: auto; padding-right: 8px; }
+        .shop-scroll::-webkit-scrollbar { width: 6px; }
+        .shop-scroll::-webkit-scrollbar-thumb { background: #444; border-radius: 4px; }
+
+        .panel-title { font-size: 1.2rem; margin: 15px 0 5px 0; color: #ffcc00; border-bottom: 1px solid #3a3a45; padding-bottom: 3px; text-transform: uppercase; letter-spacing: 1px; }
+        
+        .btn-upgrade {
+            background-color: #2e2e3e; color: white; border: 1px solid #444; padding: 10px 14px;
+            border-radius: 8px; cursor: pointer; text-align: left; display: flex; justify-content: space-between;
+            align-items: center; transition: all 0.2s; width: 100%; margin-bottom: 8px;
+        }
+        .btn-upgrade:hover:not(:disabled) { background-color: #3d3d52; border-color: #00ffcc; }
+        .btn-upgrade:disabled { opacity: 0.4; cursor: not-allowed; }
+        .upgrade-info span { display: block; }
+        .upgrade-name { font-weight: bold; font-size: 0.95rem; }
+        .upgrade-desc { font-size: 0.8rem; color: #aaa; }
+        .cost { font-weight: bold; color: #ffcc00; font-size: 0.95rem; }
+        .tech-upgrade { border-left: 4px solid #ffcc00; }
+        .tech-upgrade.purchased { border-left-color: #00ffcc; opacity: 0.7; }
+
+        /* Leaderboard Styles */
+        .leaderboard-list { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+        .leaderboard-item { display: flex; justify-content: space-between; background: #1f1f2a; padding: 8px 12px; border-radius: 6px; font-size: 0.9rem; border: 1px solid #2d2d3d; }
+        .leaderboard-item.top3 { border-color: #ffcc00; background: linear-gradient(90deg, #252535, #1f1f2a); }
+
+        .achievements-container { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 5px; }
+        .achievement { background-color: #25252b; padding: 6px 10px; border-radius: 5px; font-size: 0.75rem; color: #555; border: 1px solid #333; }
+        .achievement.unlocked { background-color: #143d30; color: #00ffcc; border-color: #00ffcc; }
+        
+        .save-controls { display: flex; gap: 10px; margin-top: 15px; }
+        .btn-system { flex: 1; padding: 8px; background-color: #1a1a22; color: #ccc; border: 1px solid #444; border-radius: 5px; cursor: pointer; font-size: 0.8rem; }
+        .btn-admin { width: 100%; margin-top: 10px; padding: 8px; background-color: #1d3557; color: #64dfdf; border: 1px solid #457b9d; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        
+        #admin-panel { display: none; width: 100%; max-width: 950px; background: #2b1b2c; border: 2px solid #ff0055; padding: 15px; border-radius: 12px; margin-top: 15px; box-sizing: border-box; }
+        .admin-controls { display: flex; gap: 10px; margin-top: 8px; }
+        .admin-input { flex: 1; padding: 10px; background: #140d16; border: 1px solid #ff0055; border-radius: 6px; color: white; }
+        .btn-broadcast { background: #ff0055; color: white; border: none; padding: 0 20px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+
+        #golden-star {
+            position: absolute; width: 50px; height: 50px; background: radial-gradient(circle, #fff700, #ffaa00);
+            clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+            cursor: pointer; display: none; z-index: 100; box-shadow: 0 0 15px #ffcc00; animation: spin 3s linear infinite;
+        }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
     </style>
+
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
-    <h1>Ultimate Clicker</h1>
-    <div id="game-ui">
-        <h1 id="score-display">0</h1>
-        <button onclick="clickAction()">CLICK!</button>
+
+    <div id="global-admin-banner">🚨 GLOBAL SYSTEM BROADCAST: <span id="banner-text">Welcome to the game!</span></div>
+    <div id="golden-star"></div>
+
+    <div class="game-container">
+        <!-- LEFT PANEL -->
+        <div class="click-section">
+            <div id="frenzy-banner">🔥 CLICK FRENZY (7X POWER)! <span id="frenzy-timer">10</span>s</div>
+            <h1 id="score">0</h1>
+            <div class="score-display">Clicks / Sec: <span id="cps">0</span></div>
+            <button id="main-click-btn">CLICK ME!</button>
+            
+            <div style="width:100%;">
+                <div class="panel-title">System Data</div>
+                <div class="save-controls">
+                    <button class="btn-system" id="btn-save">Save Game</button>
+                    <button class="btn-system" id="btn-reset" style="border-color: #552222; color: #ffaa00;">Reset Data</button>
+                </div>
+                <button class="btn-admin" id="btn-admin-login">🔑 Admin Verification (Gmail)</button>
+            </div>
+        </div>
+
+        <!-- RIGHT PANEL -->
+        <div class="shop-scroll">
+            <div class="panel-title">Global Leaderboard</div>
+            <div class="leaderboard-list" id="leaderboard-container">
+                <div class="leaderboard-item">Loading live rankings...</div>
+            </div>
+
+            <div class="panel-title">Tech Research</div>
+            <button class="btn-upgrade tech-upgrade" id="buy-tech-overclock">
+                <div class="upgrade-info"><span class="upgrade-name">Overclock Engines</span><span class="upgrade-desc">Doubles (2x) Autoclicker speed!</span></div>
+                <div class="cost" id="tech-overclock-cost">500 Clicks</div>
+            </button>
+            <button class="btn-upgrade tech-upgrade" id="buy-tech-nuclear">
+                <div class="upgrade-info"><span class="upgrade-name">Nuclear Energy</span><span class="upgrade-desc">Multiplies (5x) base Click Power!</span></div>
+                <div class="cost" id="tech-nuclear-cost">5,000 Clicks</div>
+            </button>
+
+            <div class="panel-title">Hardware Upgrades</div>
+            <button class="btn-upgrade" id="buy-click-power">
+                <div class="upgrade-info"><span class="upgrade-name">Sharper Finger (+1 Base)</span><span class="upgrade-desc">Lvl: <span id="click-power-lvl">1</span> (<span id="click-yield-val">1</span>/click)</span></div>
+                <div class="cost" id="click-power-cost">15 Clicks</div>
+            </button>
+            <button class="btn-upgrade" id="buy-tier1"><div class="upgrade-info"><span class="upgrade-name">Tier 1 Autoclicker (+1 CPS)</span><span class="upgrade-desc">Owned: <span id="t1-count">0</span></span></div><div class="cost" id="tier1-cost">50 Clicks</div></button>
+            <button class="btn-upgrade" id="buy-tier2"><div class="upgrade-info"><span class="upgrade-name">Tier 2 Autoclicker (+5 CPS)</span><span class="upgrade-desc">Owned: <span id="t2-count">0</span></span></div><div class="cost" id="tier2-cost">250 Clicks</div></button>
+            <button class="btn-upgrade" id="buy-tier3"><div class="upgrade-info"><span class="upgrade-name">Tier 3 Click Farm (+25 CPS)</span><span class="upgrade-desc">Owned: <span id="t3-count">0</span></span></div><div class="cost" id="tier3-cost">1,200 Clicks</div></button>
+            <button class="btn-upgrade" id="buy-tier4"><div class="upgrade-info"><span class="upgrade-name">Tier 4 Quantum Core (+150 CPS)</span><span class="upgrade-desc">Owned: <span id="t4-count">0</span></span></div><div class="cost" id="tier4-cost">7,500 Clicks</div></button>
+
+            <div class="panel-title">Milestone Achievements</div>
+            <div class="achievements-container">
+                <div class="achievement" id="ach-1">First Click</div>
+                <div class="achievement" id="ach-100">Centurion (100)</div>
+                <div class="achievement" id="ach-10k">Industrialist (10k)</div>
+                <div class="achievement" id="ach-speed">Speed Demon</div>
+                <div class="achievement" id="ach-frenzy">Cosmic Luck</div>
+            </div>
+        </div>
     </div>
 
-    <!-- GOD MODE PANEL -->
-    <div id="admin-panel" style="display:none;" class="admin-panel">
-        <h3 style="color:#ff4444;">GOD MODE CONTROLS</h3>
-        <input type="text" id="target-player" placeholder="Player Name">
-        <input type="number" id="new-score" placeholder="New Score">
-        <button onclick="adminModifyScore()">Set Score</button>
-        <button onclick="adminToggleBan()">Ban/Unban</button>
-        <button onclick="adminTriggerFrenzy()" style="background:#ffcc00;">START GLOBAL FRENZY (2m)</button>
+    <!-- ADMIN CONSOLE DRAWER -->
+    <div id="admin-panel">
+        <div style="font-weight: bold; color: #ff0055; font-size: 0.9rem; text-transform: uppercase;">🛡️ Secure Admin Broadcast Engine</div>
+        <div class="admin-controls">
+            <input type="text" class="admin-input" id="broadcast-msg" placeholder="Type a global message to display to all online players...">
+            <button class="btn-broadcast" id="btn-broadcast-submit">BROADCAST LIVE</button>
+        </div>
     </div>
 
     <script>
-        const firebaseConfig = { apiKey: "AIzaSyDHPOYhJ4Iw5bRx83xf0P9bV6U-AE7lAJo", authDomain: "ultimate-clicker-57b78.firebaseapp.com", projectId: "ultimate-clicker-57b78", storageBucket: "ultimate-clicker-57b78.firebasestorage.app", messagingSenderId: "62006979685", appId: "1:62006979685:web:ae4f3b4f0bc330c58daa8c" };
+        const firebaseConfig = {
+            apiKey: "AIzaSyDHPOYhJ4Iw5bRx83xf0P9bV6U-AE7lAJo",
+            authDomain: "ultimate-clicker-57b78.firebaseapp.com",
+            projectId: "ultimate-clicker-57b78",
+            storageBucket: "ultimate-clicker-57b78.firebasestorage.app",
+            messagingSenderId: "62006979685",
+            appId: "1:62006979685:web:ae4f3b4f0bc330c58daa8c"
+        };
+        
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         const auth = firebase.auth();
-        let username = localStorage.getItem('clickerUsername') || "Player";
 
-        // Admin Auth
-        function loginAdmin() {
-            const provider = new firebase.auth.GoogleAuthProvider();
-            auth.signInWithPopup(provider).then((res) => {
-                if(res.user.email === "paragsharma1101edu@gmail.com") {
-                    document.getElementById('admin-panel').style.display = "block";
-                }
-            });
+        // --- GAME ENGINE STATE ---
+        let score = 0; let baseClickPower = 1;
+        let clickPowerCost = 15; let tier1Cost = 50; let tier2Cost = 250; let tier3Cost = 1200; let tier4Cost = 7500;
+        let techOverclockCost = 500; let techNuclearCost = 5000;
+        let tier1Count = 0; let tier2Count = 0; let tier3Count = 0; let tier4Count = 0;
+        let cpsMultiplier = 1; let clickMultiplier = 1; let isOverclockBought = false; let isNuclearBought = false;
+        let isFrenzyActive = false; let frenzyTimeRemaining = 0;
+        let achievements = { firstClick: false, hundredClicks: false, tenThousandClicks: false, speedDemon: false, cosmicLuck: false };
+        let username = "";
+
+        // --- DOM LINK HOOKS ---
+        const scoreEl = document.getElementById('score'); const cpsEl = document.getElementById('cps'); const mainBtn = document.getElementById('main-click-btn');
+        const starEl = document.getElementById('golden-star'); const frenzyBanner = document.getElementById('frenzy-banner'); const frenzyTimerEl = document.getElementById('frenzy-timer');
+        const buyClickPowerBtn = document.getElementById('buy-click-power'); const clickPowerLvlEl = document.getElementById('click-power-lvl'); const clickYieldValEl = document.getElementById('click-yield-val'); const clickPowerCostEl = document.getElementById('click-power-cost');
+        const buyTier1Btn = document.getElementById('buy-tier1'); const t1CountEl = document.getElementById('t1-count'); const tier1CostEl = document.getElementById('tier1-cost');
+        const buyTier2Btn = document.getElementById('buy-tier2'); const t2CountEl = document.getElementById('t2-count'); const tier2CostEl = document.getElementById('tier2-cost');
+        const buyTier3Btn = document.getElementById('buy-tier3'); const t3CountEl = document.getElementById('t3-count'); const tier3CostEl = document.getElementById('tier3-cost');
+        const buyTier4Btn = document.getElementById('buy-tier4'); const t4CountEl = document.getElementById('t4-count'); const tier4CostEl = document.getElementById('tier4-cost');
+        const buyOverclockBtn = document.getElementById('buy-tech-overclock'); const buyNuclearBtn = document.getElementById('buy-tech-nuclear');
+        const globalBanner = document.getElementById('global-admin-banner'); const bannerText = document.getElementById('banner-text');
+        const adminBtn = document.getElementById('btn-admin-login'); const adminPanel = document.getElementById('admin-panel');
+        const leaderboardContainer = document.getElementById('leaderboard-container');
+
+        // --- DYNAMIC USER REGISTRATION ---
+        function getUsername() {
+            username = localStorage.getItem('clickerUsername');
+            if (!username) {
+                username = prompt("Enter your player name for the live Leaderboard:", "Player_" + Math.floor(Math.random()*9000 + 1000));
+                if (!username || username.trim() === "") username = "Anonymous_Clicker";
+                localStorage.setItem('clickerUsername', username.trim());
+            }
         }
+        getUsername();
 
-        async function adminModifyScore() {
-            const name = document.getElementById('target-player').value;
-            const score = parseInt(document.getElementById('new-score').value);
-            await db.collection("leaderboard").doc(name).update({ highScore: score });
-            alert("Score updated!");
-        }
-
-        async function adminToggleBan() {
-            const name = document.getElementById('target-player').value;
-            const doc = await db.collection("leaderboard").doc(name).get();
-            const banned = doc.data().isBanned || false;
-            await db.collection("leaderboard").doc(name).update({ isBanned: !banned });
-            alert("Ban status toggled!");
-        }
-
-        async function adminTriggerFrenzy() {
-            await db.collection("global_events").doc("frenzy").set({ active: true, timestamp: Date.now() });
-            alert("Global Frenzy Started!");
-        }
-
-        // Check if Banned
-        db.collection("leaderboard").doc(username).onSnapshot(doc => {
-            if(doc.exists && doc.data().isBanned) {
-                document.body.innerHTML = "<h1>YOU ARE BANNED FROM THE GAME</h1>";
+        // --- REALTIME LISTENERS ---
+        db.collection("announcements").doc("current").onSnapshot((doc) => {
+            if (doc.exists && doc.data().message && doc.data().message.trim() !== "") {
+                globalBanner.style.display = "block";
+                bannerText.innerText = doc.data().message;
+            } else {
+                globalBanner.style.display = "none";
             }
         });
+
+        // Realtime Leaderboard Listener (Top 5)
+        db.collection("leaderboard").orderBy("highScore", "desc").limit(5).onSnapshot((snapshot) => {
+            leaderboardContainer.innerHTML = "";
+            let rank = 1;
+            snapshot.forEach((doc) => {
+                const data = doc.data();
+                const item = document.createElement("div");
+                item.className = `leaderboard-item ${rank <= 3 ? 'top3' : ''}`;
+                item.innerHTML = `<span><strong>#${rank}</strong> ${data.name}</span> <strong>${Math.floor(data.highScore)}</strong>`;
+                leaderboardContainer.appendChild(item);
+                rank++;
+            });
+        });
+
+        // --- LEADERBOARD SYNC SYSTEM ---
+        function syncLeaderboard() {
+            if (!username) return;
+            db.collection("leaderboard").doc(username).set({
+                name: username,
+                highScore: score
+            }, { merge: true }).catch(err => console.log("Leaderboard sync pending..."));
+        }
+
+        // --- CORE GAME ENGINE LOGIC ---
+        function getRawCPS() { return (tier1Count * 1) + (tier2Count * 5) + (tier3Count * 25) + (tier4Count * 150); }
+        function getTotalCPS() { return getRawCPS() * cpsMultiplier; }
+        function getCurrentClickPower() { let power = baseClickPower * clickMultiplier; if (isFrenzyActive) power *= 7; return power; }
+
+        function updateDisplay() {
+            scoreEl.innerText = Math.floor(score); cpsEl.innerText = getTotalCPS().toFixed(1);
+            clickPowerLvlEl.innerText = baseClickPower; clickYieldValEl.innerText = getCurrentClickPower(); clickPowerCostEl.innerText = clickPowerCost + " Clicks";
+            t1CountEl.innerText = tier1Count; tier1CostEl.innerText = tier1Cost + " Clicks";
+            t2CountEl.innerText = tier2Count; tier2CostEl.innerText = tier2Cost + " Clicks";
+            t3CountEl.innerText = tier3Count; tier3CostEl.innerText = tier3Cost + " Clicks";
+            t4CountEl.innerText = tier4Count; tier4CostEl.innerText = tier4Cost + " Clicks";
+
+            if(isOverclockBought) { buyOverclockBtn.disabled = true; buyOverclockBtn.classList.add('purchased'); document.getElementById('tech-overclock-cost').innerText = "Maxed"; }
+            else { buyOverclockBtn.disabled = score < techOverclockCost; document.getElementById('tech-overclock-cost').innerText = techOverclockCost + " Clicks"; }
+            if(isNuclearBought) { buyNuclearBtn.disabled = true; buyNuclearBtn.classList.add('purchased'); document.getElementById('tech-nuclear-cost').innerText = "Maxed"; }
+            else { buyNuclearBtn.disabled = score < techNuclearCost; document.getElementById('tech-nuclear-cost').innerText = techNuclearCost + " Clicks"; }
+
+            buyClickPowerBtn.disabled = score < clickPowerCost; buyTier1Btn.disabled = score < tier1Cost;
+            buyTier2Btn.disabled = score < tier2Cost; buyTier3Btn.disabled = score < tier3Cost; buyTier4Btn.disabled = score < tier4Cost;
+            checkAchievements();
+        }
+
+        function checkAchievements() {
+            if (score >= 1 && !achievements.firstClick) achievements.firstClick = true;
+            if (score >= 100 && !achievements.hundredClicks) achievements.hundredClicks = true;
+            if (score >= 10000 && !achievements.tenThousandClicks) achievements.tenThousandClicks = true;
+            if (getTotalCPS() >= 15 && !achievements.speedDemon) achievements.speedDemon = true;
+            if (achievements.firstClick) document.getElementById('ach-1').classList.add('unlocked');
+            if (achievements.hundredClicks) document.getElementById('ach-100').classList.add('unlocked');
+            if (achievements.tenThousandClicks) document.getElementById('ach-10k').classList.add('unlocked');
+            if (achievements.speedDemon) document.getElementById('ach-speed').classList.add('unlocked');
+            if (achievements.cosmicLuck) document.getElementById('ach-frenzy').classList.add('unlocked');
+        }
+
+        // --- GAME ACTIONS ---
+        mainBtn.addEventListener('click', () => { score += getCurrentClickPower(); updateDisplay(); });
+        buyClickPowerBtn.addEventListener('click', () => { if (score >= clickPowerCost) { score -= clickPowerCost; baseClickPower += 1; clickPowerCost = Math.floor(clickPowerCost * 1.5); updateDisplay(); } });
+        buyTier1Btn.addEventListener('click', () => { if (score >= tier1Cost) { score -= tier1Cost; tier1Count++; tier1Cost = Math.floor(tier1Cost * 1.3); updateDisplay(); } });
+        buyTier2Btn.addEventListener('click', () => { if (score >= tier2Cost) { score -= tier2Cost; tier2Count++; tier2Cost = Math.floor(tier2Cost * 1.35); updateDisplay(); } });
+        buyTier3Btn.addEventListener('click', () => { if (score >= tier3Cost) { score -= tier3Cost; tier3Count++; tier3Cost = Math.floor(tier3Cost * 1.4); updateDisplay(); } });
+        buyTier4Btn.addEventListener('click', () => { if (score >= tier4Cost) { score -= tier4Cost; tier4Count++; tier4Cost = Math.floor(tier4Cost * 1.45); updateDisplay(); } });
+        buyOverclockBtn.addEventListener('click', () => { if (!isOverclockBought && score >= techOverclockCost) { score -= techOverclockCost; cpsMultiplier = 2; isOverclockBought = true; updateDisplay(); } });
+        buyNuclearBtn.addEventListener('click', () => { if (!isNuclearBought && score >= techNuclearCost) { score -= techNuclearCost; clickMultiplier = 5; isNuclearBought = true; updateDisplay(); } });
+
+        function spawnGoldenStar() {
+            if (isFrenzyActive) return;
+            const x = Math.random() * (window.innerWidth - 100) + 20; const y = Math.random() * (window.innerHeight - 100) + 20;
+            starEl.style.left = x + 'px'; starEl.style.top = y + 'px'; starEl.style.display = 'block';
+            setTimeout(() => { starEl.style.display = 'none'; }, 6000);
+        }
+        starEl.addEventListener('click', () => { starEl.style.display = 'none'; isFrenzyActive = true; frenzyTimeRemaining = 10; achievements.cosmicLuck = true; frenzyBanner.style.display = 'block'; frenzyTimerEl.innerText = frenzyTimeRemaining; updateDisplay(); });
+
+        setInterval(() => { score += getTotalCPS() / 10; updateDisplay(); }, 100);
+        setInterval(() => {
+            if (isFrenzyActive) { frenzyTimeRemaining--; frenzyTimerEl.innerText = frenzyTimeRemaining; if (frenzyTimeRemaining <= 0) { isFrenzyActive = false; frenzyBanner.style.display = 'none'; } }
+            if (Math.random() < 0.08) spawnGoldenStar();
+        }, 1000);
+
+        // Every 10 seconds, save local progress and upload score to the cloud leaderboard
+        setInterval(() => { saveGame(); syncLeaderboard(); }, 10000);
+
+        function saveGame() {
+            const saveState = { score, baseClickPower, clickPowerCost, tier1Cost, tier2Cost, tier3Cost, tier4Cost, tier1Count, tier2Count, tier3Count, tier4Count, techOverclockCost, techNuclearCost, cpsMultiplier, clickMultiplier, isOverclockBought, isNuclearBought, achievements };
+            localStorage.setItem('clickerUltimateSave', JSON.stringify(saveState));
+        }
+        document.getElementById('btn-save').addEventListener('click', () => { saveGame(); syncLeaderboard(); alert("Progress Saved & Leaderboard Updated!"); });
+        document.getElementById('btn-reset').addEventListener('click', () => { if (confirm("Reset everything? This will wipe your data.")) { localStorage.removeItem('clickerUltimateSave'); localStorage.removeItem('clickerUsername'); location.reload(); } });
+        
+        // --- ADMIN LOGIN AND BROADCAST ENGINE ---
+        adminBtn.addEventListener('click', () => {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            auth.signInWithPopup(provider).then((result) => {
+                if (result.user.email === "paragsharma1101edu@gmail.com") {
+                    adminBtn.innerText = "🛡️ Authenticated System Admin";
+                    adminBtn.style.backgroundColor = "#2b9348";
+                    adminBtn.style.color = "#fff";
+                    adminPanel.style.display = "block";
+                } else {
+                    alert("Access Denied: You are not authorized as the system administrator.");
+                    auth.signOut();
+                }
+            }).catch((error) => { alert("Auth failed: " + error.message); });
+        });
+
+        document.getElementById('btn-broadcast-submit').addEventListener('click', () => {
+            const msg = document.getElementById('broadcast-msg').value;
+            db.collection("announcements").doc("current").set({ message: msg })
+            .then(() => { document.getElementById('broadcast-msg').value = ""; })
+            .catch((err) => { alert("Error sending broadcast: " + err.message); });
+        });
+
+        const saved = localStorage.getItem('clickerUltimateSave');
+        if (saved) {
+            const p = JSON.parse(saved); score = p.score||0; baseClickPower = p.baseClickPower||1; clickPowerCost = p.clickPowerCost||15; tier1Cost = p.tier1Cost||50; tier2Cost = p.tier2Cost||250; tier3Cost = p.tier3Cost||1200; tier4Cost = p.tier4Cost||7500; techOverclockCost = p.techOverclockCost||500; techNuclearCost = p.techNuclearCost||5000; tier1Count = p.tier1Count||0; tier2Count = p.tier2Count||0; tier3Count = p.tier3Count||0; tier4Count = p.tier4Count||0; cpsMultiplier = p.cpsMultiplier||1; clickMultiplier = p.clickMultiplier||1; isOverclockBought = p.isOverclockBought||false; isNuclearBought = p.isNuclearBought||false; achievements = p.achievements||achievements;
+        }
+        updateDisplay();
     </script>
-    <button onclick="loginAdmin()">Admin Login</button>
 </body>
 </html>
