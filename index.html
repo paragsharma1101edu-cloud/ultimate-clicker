@@ -2,70 +2,106 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ultimate Clicker Evolution</title>
     <style>
-        /* [KEEP YOUR ORIGINAL STYLES HERE] */
-        body { font-family: sans-serif; background: #1a1a22; color: #fff; padding: 20px; }
-        .admin-name { color: #ffcc00 !important; font-weight: bold; }
-        .admin-panel { background: #331111; padding: 20px; border: 2px solid #ff0000; margin-top: 20px; }
-        /* Add your original game container/button styles here */
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #1a1a22; color: #fff; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        .admin-name { color: #ffcc00 !important; font-weight: bold; text-shadow: 0 0 8px rgba(255, 204, 0, 0.8); }
+        #global-admin-banner { display: none; width: 100%; background: linear-gradient(90deg, #ff0055, #9900aa); color: white; text-align: center; padding: 12px 0; font-weight: bold; position: absolute; top: 0; z-index: 9999; }
+        .game-container { display: grid; grid-template-columns: 1fr 1.2fr; gap: 25px; background-color: #23232e; padding: 25px; border-radius: 15px; max-width: 950px; width: 100%; margin-top: 40px; }
+        .admin-panel { display: none; width: 950px; background: #331111; border: 2px solid #ff0000; padding: 15px; border-radius: 12px; margin-top: 15px; }
+        .leaderboard-item { display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid #333; }
+        .top3 { color: #ffcc00; }
+        button { cursor: pointer; }
     </style>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
-    <div id="admin-panel" class="admin-panel" style="display:none;">
-        <h3>GOD MODE</h3>
-        <input type="text" id="target-player" placeholder="Player Name">
-        <input type="number" id="new-score" placeholder="New Score">
-        <button onclick="adminModifyScore()">Set Score</button>
-        <button onclick="adminToggleBan()">Ban/Unban</button>
-        <button onclick="adminTriggerFrenzy()">START FRENZY</button>
+    <div id="global-admin-banner">🚨 GLOBAL SYSTEM BROADCAST: <span id="banner-text"></span></div>
+    
+    <div class="game-container">
+        <div class="click-section">
+            <h1 id="score">0</h1>
+            <button id="main-click-btn">CLICK ME!</button>
+            <button id="btn-admin-login" style="margin-top:20px;">🔑 Admin Login</button>
+        </div>
+        <div>
+            <h3>GLOBAL LEADERBOARD</h3>
+            <div id="leaderboard-container"></div>
+        </div>
     </div>
-    <button onclick="loginAdmin()">Admin Login</button>
+
+    <div id="admin-panel" class="admin-panel">
+        <h3 style="color:#ff4444;">GOD MODE</h3>
+        <input type="text" id="broadcast-msg" placeholder="Broadcast message...">
+        <button id="btn-broadcast-submit">SEND BROADCAST</button>
+    </div>
 
     <script>
-        // 1. Firebase Config
-        const firebaseConfig = { /* YOUR CONFIG */ };
+        const firebaseConfig = { apiKey: "AIzaSyDHPOYhJ4Iw5bRx83xf0P9bV6U-AE7lAJo", authDomain: "ultimate-clicker-57b78.firebaseapp.com", projectId: "ultimate-clicker-57b78", storageBucket: "ultimate-clicker-57b78.firebasestorage.app", messagingSenderId: "62006979685", appId: "1:62006979685:web:ae4f3b4f0bc330c58daa8c" };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
+        const auth = firebase.auth();
+        const ADMIN_EMAIL = "paragsharma1101edu@gmail.com";
 
-        // 2. YOUR ORIGINAL GAME VARIABLES & LOGIC
-        // ... (Paste all your original let/const/functions here) ...
+        let score = 0;
+        let username = localStorage.getItem('clickerUsername') || prompt("Name?");
+        localStorage.setItem('clickerUsername', username);
 
-        // 3. INTEGRATED ADMIN LOGIC (Do NOT delete this)
-        function loginAdmin() {
-            firebase.auth().signInWithPopup(new firebase.auth.GoogleAuthProvider()).then(res => {
-                if(res.user.email === "paragsharma1101edu@gmail.com") {
-                    document.getElementById('admin-panel').style.display = "block";
-                }
-            });
-        }
-
-        // Updated Leaderboard Listener (Handles Golden Name)
-        db.collection("leaderboard").orderBy("highScore", "desc").onSnapshot(snapshot => {
+        // Leaderboard: Includes logic to make YOU Golden
+        db.collection("leaderboard").orderBy("highScore", "desc").limit(10).onSnapshot(snapshot => {
             const container = document.getElementById("leaderboard-container");
             container.innerHTML = "";
             snapshot.forEach(doc => {
                 const data = doc.data();
-                const isGold = data.isAdmin ? "admin-name" : "";
-                container.innerHTML += `<div class="${isGold}">${data.name}: ${Math.floor(data.highScore)}</div>`;
+                const isMe = (data.email === ADMIN_EMAIL);
+                container.innerHTML += `<div class="leaderboard-item ${isMe ? 'admin-name' : ''}">
+                    <span>${data.name}</span> <span>${Math.floor(data.highScore)}</span>
+                </div>`;
             });
         });
 
-        // Updated Sync to set Admin flag
+        // Sync: Saves your score and your Admin status
         async function syncLeaderboard() {
-            const user = firebase.auth().currentUser;
-            const isAdmin = user && user.email === "paragsharma1101edu@gmail.com";
-            await db.collection("leaderboard").doc(username).set({ 
-                name: username, 
-                highScore: score, 
-                isAdmin: isAdmin 
+            const user = auth.currentUser;
+            await db.collection("leaderboard").doc(username).set({
+                name: username,
+                highScore: score,
+                email: user ? user.email : ""
             }, { merge: true });
         }
-        
-        // ... (Keep the rest of your original functions) ...
+
+        // Admin Auth
+        document.getElementById('btn-admin-login').addEventListener('click', () => {
+            auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).then(res => {
+                if(res.user.email === ADMIN_EMAIL) {
+                    document.getElementById('admin-panel').style.display = "block";
+                }
+            });
+        });
+
+        // Broadcast Engine
+        document.getElementById('btn-broadcast-submit').addEventListener('click', () => {
+            const msg = document.getElementById('broadcast-msg').value;
+            db.collection("announcements").doc("current").set({ message: msg });
+        });
+
+        // Listen for Broadcasts
+        db.collection("announcements").doc("current").onSnapshot(doc => {
+            if(doc.exists && doc.data().message) {
+                document.getElementById('global-admin-banner').style.display = "block";
+                document.getElementById('banner-text').innerText = doc.data().message;
+            }
+        });
+
+        // Core Clicker Logic (Keep your original game loop here)
+        document.getElementById('main-click-btn').addEventListener('click', () => {
+            score++;
+            document.getElementById('score').innerText = score;
+            syncLeaderboard();
+        });
     </script>
 </body>
 </html>
